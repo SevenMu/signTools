@@ -1,0 +1,28 @@
+name: "AliyunDrive Checkin"
+
+on:
+  push:
+    # branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 23 * * *'
+  watch:
+    types: [started]
+
+jobs:
+  checks:
+    name: run
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '1.19' # The Go version to download (if necessary) and use.
+    - 
+      name: Checkin
+      env:
+        GO111MODULE: "auto"
+        REFRESH_TOKENS: ${{ secrets.REFRESH_TOKENS }}
+        PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+      run: pwd && cd function/ali_pan && go mod tidy && go build -o ali_pan ali_pan.go && ./ali_pan
