@@ -1,80 +1,111 @@
-// version v0.0.1
-// create by BlueSkyClouds
-// detail url: https://github.com/BlueskyClouds/My-Actions
-
-const exec = require('child_process').execSync
-const fs = require('fs')
-const download = require('download')
-
-const $ = new Env('中国电信签到');
+// TODO 终点论坛签到
+const $ = new Env('终点论坛自动签到');
 const notify = $.isNode() ? require('../sendNotify') : '';
-// 公共变量
-const KEY = process.env.TELECOM_MOBILE
+const user = process.env.ZD_USER
+const pwd = process.env.ZD_PASS
 const SEND_KEY = process.env.SEND_KEY
+const axios = require("axios")
 const UTC8 = new Date().getTime() + new Date().getTimezoneOffset()*60*1000 + 8*60*60*1000;
 
-async function downFile () {
-    const url = 'https://raw.githubusercontent.com/chavyleung/scripts/master/10000/10000.js'
-    await download(url, './')
+once = null;
+ckstatus = 1;
+signstatus = 0;
+notice = timeFormat(UTC8) + "\n";
+
+const header = {
+    headers: {
+        Referer: "https://bbs.kfpromax.com/",
+        Host: "bbs.kfpromax.com",
+        "user-agent": "Mozilla/5.0 (Linux; Android 10; Redmi K30) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.83 Mobile Safari/537.36",
+    },
+};
+
+//获取登录信息
+function login() {
+    return new Promise(async (resolve) => {
+        try {
+            let url = "https://bbs.kfpromax.com/login.php?";
+            let res = await axios.post(url, header);
+            reg1 = /需要先登录/;
+            if (res.status = 200) {
+                console.log("cookie失效");
+                ckstatus = 0;
+                notice += "cookie失效";
+                if(SEND_KEY){
+                    notify.sendNotify("终点论坛自动签到", notice);
+                    return;
+                }
+            } else {
+                console.log("登录失败")
+            }
+        } catch (err) {
+            console.log(err);
+        }
+        resolve();
+    });
 }
 
-async function changeFiele () {
-    let content = await fs.readFileSync('./10000.js', 'utf8')
-    //替换各种无用信息.
-    content = content.replace("\"\\n\"", "\"\"")
-    content = content.replace("中国电信", ``)
-    content = content.replace(/==============\\ud83d\\udce3\\u7cfb\\u7edf\\u901a\\u77e5\\ud83d\\udce3==============/, ``)
-    content = content.replace("\\ud83d\\udd14${this.name}, \\u5f00\\u59cb!", ``)
-    content = content.replace("\\ud83d\\udd14${this.name}, \\u7ed3\\u675f! \\ud83d\\udd5b ${e} \\u79d2", ``)
-
-    content = content.replace("const phonedat = $.getdata($.KEY_mobile)", `const phonedat = '${KEY}'`)
-    await fs.writeFileSync( './10000.js', content, 'utf8')
+//每日签到
+function daily() {
+    return new Promise(async (resolve) => {
+        try {
+            let url = `https://www.v2ex.com/mission/daily/redeem?once=${once}`;
+            let res = await axios.get(url, header);
+            reg = /已成功领取每日登录奖励/;
+            if (reg.test(res.data)) {
+                notice += "签到成功\n";
+                signstatus = 1;
+            } else {
+                notice += "签到失败Cookie疑似失效\n";
+                if(SEND_KEY){
+                    notify.sendNotify("V2ex自动签到", notice);
+                    return;
+                }
+            }
+        } catch (err) {
+            console.log(err);
+        }
+        resolve();
+    });
 }
 
-async function deleteFile(path) {
-    // 查看文件result.txt是  否存在,如果存在,先删除
-    const fileExists = await fs.existsSync(path);
-    // console.log('fileExists', fileExists);
-    if (fileExists) {
-        const unlinkRes = await fs.unlinkSync(path);
-        // console.log('unlinkRes', unlinkRes)
-    }
+//查询余额
+function balance() {
+    return new Promise(async (resolve) => {
+        try {
+            let url = "https://www.v2ex.com/balance";
+            let res = await axios.get(url, header);
+            reg = /\d+?\s的每日登录奖励\s\d+\s铜币/;
+            console.log(res.data.match(reg)[0]);
+            notice += res.data.match(reg)[0];
+        } catch (err) {
+            console.log(err);
+        }
+        resolve();
+    });
 }
 
-async function start() {
-    if (!KEY) {
-        console.log('请填写电信号码后再继续')
-        return
-    }
-    // 下载最新代码
-    await downFile();
-    console.log('下载代码完毕')
-    // 替换变量
-    await changeFiele();
-    console.log('替换变量完毕')
-    // 执行
-    await exec("node 10000.js >> result.txt");
-    console.log('执行完毕')
-    const path = "./result.txt";
-    let content = "";
-    if (fs.existsSync(path)) {
-        content = fs.readFileSync(path, "utf8");
-    }
+function sign() {
+    return new Promise(async (resolve) => {
+        try {
 
-    if (content.includes("签到成功") | content.includes("已签到")) {
-        console.log("电信签到-" + content)
-    }else{
-        await notify.sendNotify("中国电信签到-" + timeFormat(UTC8), content);
-        console.log("中国电信签到-" + content)
-    }
-
-    //运行完成后，删除下载的文件
-    console.log('运行完成后，删除下载的文件\n')
-    await deleteFile(path);
-
+            if (!user || !pwd) {
+                console.log("未配置终点论坛账号");
+                return;
+            }
+            await login();
+            await daily();
+            await balance();
+            console.log(notice);
+            notify.sendNotify("V2ex自动签到", notice);
+        } catch (err) {
+            console.log(err);
+        }
+        resolve();
+    });
 }
 
-start()
+sign();
 
 function timeFormat(time) {
     let date;

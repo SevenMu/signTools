@@ -29,8 +29,9 @@ class BiliBiliCheckIn(object):
     @staticmethod
     def reward(session) -> dict:
         """取B站经验信息"""
-        url = "https://account.bilibili.com/home/reward"
+        url = "https://api.bilibili.com/x/member/web/exp/reward"
         ret = session.get(url=url).json()
+
         return ret
 
     @staticmethod
@@ -206,13 +207,13 @@ class BiliBiliCheckIn(object):
         msg = f"银瓜子数量: {silver}\n金瓜子数量: {gold}\n硬币数量: {coin}"
         return msg
 
-    @staticmethod
-    def silver2coin(session, bili_jct) -> dict:
-        """银瓜子兑换硬币"""
-        url = "https://api.live.bilibili.com/pay/v1/Exchange/silver2coin"
-        post_data = {"csrf_token": bili_jct}
-        ret = session.post(url=url, data=post_data).json()
-        return ret
+    # @staticmethod
+    # def silver2coin(session, bili_jct) -> dict:
+    #     """银瓜子兑换硬币"""
+    #     url = "https://api.live.bilibili.com/pay/v1/Exchange/silver2coin"
+    #     post_data = {"csrf_token": bili_jct}
+    #     ret = session.post(url=url, data=post_data).json()
+    #     return ret
 
     @staticmethod
     def get_region(session, rid=1, num=6) -> dict:
@@ -249,7 +250,7 @@ class BiliBiliCheckIn(object):
         else:
             coin_type = int(os.environ['BILI_TYPE'])
 
-        silver2coin = True #是否开启银瓜子换硬币，默认为 True 开启
+        silver2coin = False #是否开启银瓜子换硬币，默认为 True 开启
         session = requests.session()
         requests.utils.add_dict_to_cookiejar(session.cookies, bilibili_cookie)
         session.headers.update(
@@ -270,7 +271,7 @@ class BiliBiliCheckIn(object):
             aid_list = self.get_region(session=session)
             reward_ret = self.reward(session=session)
             # print(reward_ret) # 取消本段输出
-            coins_av_count = reward_ret.get("data", {}).get("coins_av") // 10
+            coins_av_count = reward_ret.get("data", {}).get("coins") // 10
             coin_num = coin_num - coins_av_count
             coin_num = coin_num if coin_num < coin else coin
             print(coin_num)
@@ -332,6 +333,8 @@ class BiliBiliCheckIn(object):
             uname, uid, is_login, new_coin, vip_type, new_current_exp = self.get_nav(session=session)
             # print(uname, uid, is_login, new_coin, vip_type, new_current_exp)
             reward_ret = self.reward(session=session)
+            test = reward_ret.get("data",{}).get("home-top-bp")
+            print(test)
             login = reward_ret.get("data", {}).get("login")
             watch_av = reward_ret.get("data", {}).get("watch_av")
             coins_av = reward_ret.get("data", {}).get("coins_av", 0)

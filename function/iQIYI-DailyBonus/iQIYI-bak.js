@@ -18,7 +18,6 @@ JsBox, Node.js用户抓取Cookie说明：
 提取字母数字混合字段, 到&结束, 填入以下单引号内即可.
 */
 
-var cookie = ''
 
 /*********************
 QuantumultX 远程脚本配置:
@@ -60,6 +59,9 @@ http-request ^https?:\/\/iface(\d)?\.iqiyi\.com\/ script-path=https://raw.github
 hostname= ifac*.iqiyi.com
 
 */
+const KEY = process.env.iQIYI_COOKIE
+
+var cookie = KEY
 
 var LogDetails = false; // 响应日志
 
@@ -122,6 +124,7 @@ function Checkin() {
           return false;
         }
         const obj = JSON.parse(data)
+        console.log(obj)
         const Details = LogDetails ? `response:\n${data}` : ''
         if (obj.msg === "成功") {
           if (obj.data.signInfo.code === "A00000") {
