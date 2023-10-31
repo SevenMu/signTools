@@ -1,9 +1,9 @@
-name: 百度签到
+name: tieba
 
 on:
     workflow_dispatch:
     schedule:
-        - cron: "30 04 * * *"
+        - cron: 15 16 * * *
     watch:
         types: [started]
 

@@ -1,9 +1,9 @@
-name: 哔咔漫画自动打哔咔
+name: bika
 
 on:
     workflow_dispatch:
     schedule:
-        - cron: "01 04 * * *"
+        - cron: 5 16 * * *
     watch:
         types: [started]
 
