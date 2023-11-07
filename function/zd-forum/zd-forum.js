@@ -81,11 +81,9 @@ function daily() {
                     "cookie": cookie
                 },
                 responseType: "arraybuffer", // 关键步骤
-                responseEncoding: "utf8",
             });
-            let { data } = res
-            let utf8decoder = new TextDecoder("gb2312"); // 关键步骤
-            res = utf8decoder.decode(data);
+            res = Buffer.from(res.data,'binary').toString('utf-8');
+            console.log(res);
             reg = /领取成功/;
             reg1 = /今天的每日奖励已经领过了/;
             console.log(res);
