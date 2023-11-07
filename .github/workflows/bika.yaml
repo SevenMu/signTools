@@ -13,7 +13,7 @@ jobs:
         if: github.event.repository.owner.id == github.event.sender.id
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
 
             - name: "安装依赖包"
               run: pip3 install -r ./requirements.txt
